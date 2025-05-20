@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from 'react';
@@ -14,13 +15,13 @@ export default function ExcelToPDFLabels() {
     labelsPerPage: 12,
     pageWidth: 210,
     pageHeight: 297,
-    labelWidth: 90,
-    labelHeight: 50,
+    labelWidth: 50,
+    labelHeight: 40,
     marginTop: 10,
     marginLeft: 10,
     columnGap: 10,
     rowGap: 10,
-    columns: 2
+    columns: 3
   });
 
   const handleFileUpload = (e: any) => {
@@ -85,10 +86,10 @@ export default function ExcelToPDFLabels() {
         columnGap, rowGap, columns, labelsPerPage
       } = labelSettings;
 
-      const rows = Math.floor(labelsPerPage / columns);
+      // const rows = Math.floor(labelsPerPage / columns);
 
       // Expand data based on LabelCount
-      let expandedData: any = [];
+      const expandedData: any = [];
       data.forEach((item: any) => {
         const labelCount = parseInt(item.LabelCount || item.labelcount || item.Quantity || item.quantity || '1', 10);
         for (let i = 0; i < labelCount; i++) {
@@ -99,7 +100,7 @@ export default function ExcelToPDFLabels() {
       // Process each item and create labels
       expandedData.forEach((item: any, index: number) => {
         // Calculate page number and position
-        const page = Math.floor(index / labelsPerPage);
+        // const page = Math.floor(index / labelsPerPage);
         const positionOnPage = index % labelsPerPage;
         const row = Math.floor(positionOnPage / columns);
         const col = positionOnPage % columns;
@@ -124,7 +125,7 @@ export default function ExcelToPDFLabels() {
         // Draw price at top in large font - centered
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
-        const price = item.Price || item.price || item.PRICE || '0.00';
+        const price = item.Price.toFixed(2) || item.price.toFixed(2) || item.PRICE.toFixed(2) || '0.00';
         doc.text(`${price}`, x + (labelWidth / 2), y + 10, { align: 'center' });
 
         // Draw description text - centered
@@ -169,7 +170,7 @@ export default function ExcelToPDFLabels() {
         <ol className="list-decimal pl-5 space-y-1 text-sm">
           <li>Upload an Excel file with your product data</li>
           <li>Adjust label settings if needed</li>
-          <li>Click "Generate PDF" to create your labels</li>
+          <li>Click `Generate PDF` to create your labels</li>
           <li>Download the generated PDF file</li>
         </ol>
         <p className="mt-2 text-sm text-gray-600">
@@ -333,7 +334,7 @@ export default function ExcelToPDFLabels() {
             {preview.slice(0, 4).map((item: any, idx: number) => (
               <div key={idx} className="bg-gray-100 p-3 rounded border border-gray-300 text-center">
                 <div className="text-lg font-bold">
-                  {item.Price || item.price || item.PRICE || '0.00'}
+                  {item.Price.toFixed(2) || item.price.toFixed(2) || item.PRICE.toFixed(2) || '0.00'}
                 </div>
                 <div className="text-sm my-2 h-12 overflow-hidden">
                   {item.Description || item.description || item.DESC || item.Name || item.name || 'Product Description'}
