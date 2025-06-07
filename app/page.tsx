@@ -4,6 +4,32 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
+import { createErasLight } from './ERASLGHT-normal'
+import { createErasBold } from './ERASBD-bold'
+jsPDF.API.events.push(['addFonts', createErasLight])
+jsPDF.API.events.push(['addFonts', createErasBold])
+
+
+function formatFinancial(number: any) {
+  // Handle invalid inputs
+  if (number === null || number === undefined || isNaN(number)) {
+    return '0.00';
+  }
+
+  // Convert to number if it's a string
+  const num = typeof number === 'string' ? parseFloat(number) : number;
+
+  // Format with 2 decimal places and thousand separators
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function formatCurrency(number: number, symbol = '') {
+  const formatted = formatFinancial(number);
+  return `${symbol} ${formatted}`.trim();
+}
 
 export default function ExcelToPDFLabels() {
   const [file, setFile] = useState<any>(null);
@@ -12,17 +38,47 @@ export default function ExcelToPDFLabels() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [labelSettings, setLabelSettings] = useState({
+    currency: '',
     labelsPerPage: 12,
     pageWidth: 210,
     pageHeight: 297,
     labelWidth: 50,
-    labelHeight: 40,
+    labelHeight: 25,
     marginTop: 10,
     marginLeft: 10,
     columnGap: 10,
     rowGap: 10,
     columns: 3
   });
+
+  const downloadSampleFile = () => {
+
+    const sampleData = [
+      { Price: 1095.50, Description: "Stainless Steel Bollard Center Curved 10mm x 70mm Left", Code: "10148", LabelCount: 2 },
+      { Price: 95.50, Description: "Stainless Steel Bollard Center Curved 10mm x 70mm Right", Code: "10149", LabelCount: 1 },
+      { Price: 2278.10, Description: "Stainless Steel Bollard Center Curved 12mm x 120mm Right", Code: "10957", LabelCount: 3 },
+      { Price: 125.00, Description: "Stainless Steel Handle 200mm", Code: "10224", LabelCount: 1 },
+      { Price: 45.75, Description: "Aluminum Bracket Small", Code: "10332", LabelCount: 4 },
+    ];
+
+
+    try {
+      // Create a new workbook
+      const workbook = XLSX.utils.book_new();
+
+      // Convert sample data to worksheet
+      const worksheet = XLSX.utils.json_to_sheet(sampleData);
+
+      // Add the worksheet to the workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Labels");
+
+      // Generate Excel file and trigger download
+      XLSX.writeFile(workbook, "sample-labels.xlsx");
+    } catch (err) {
+      setError("Error generating sample file.");
+      console.error("Sample file generation error:", err);
+    }
+  };
 
   const handleFileUpload = (e: any) => {
     const file = e.target.files[0];
@@ -40,7 +96,7 @@ export default function ExcelToPDFLabels() {
           const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
           setData(jsonData);
-          setPreview(jsonData.slice(0, 6)); // Preview first 6 items
+          setPreview(jsonData.slice(0, labelSettings.labelsPerPage)); // Preview first 6 items
 
           // Calculate total labels
           let totalLabels = 0;
@@ -83,7 +139,7 @@ export default function ExcelToPDFLabels() {
 
       const {
         labelWidth, labelHeight, marginTop, marginLeft,
-        columnGap, rowGap, columns, labelsPerPage
+        columnGap, rowGap, columns, labelsPerPage, currency
       } = labelSettings;
 
       // const rows = Math.floor(labelsPerPage / columns);
@@ -99,8 +155,50 @@ export default function ExcelToPDFLabels() {
 
       // Process each item and create labels
       expandedData.forEach((item: any, index: number) => {
-        // Calculate page number and position
-        // const page = Math.floor(index / labelsPerPage);
+        // // Calculate page number and position
+        // // const page = Math.floor(index / labelsPerPage);
+        // const positionOnPage = index % labelsPerPage;
+        // const row = Math.floor(positionOnPage / columns);
+        // const col = positionOnPage % columns;
+
+        // // Add new page if needed
+        // if (positionOnPage === 0 && index > 0) {
+        //   doc.addPage();
+        // }
+
+        // // Calculate x and y position for this label
+        // const x = marginLeft + (col * (labelWidth + columnGap));
+        // const y = marginTop + (row * (labelHeight + rowGap));
+
+        // // Draw label background
+        // doc.setFillColor(240, 240, 240);
+        // doc.rect(x, y, labelWidth, labelHeight, 'F');
+
+        // // Draw border
+        // doc.setDrawColor(200, 200, 200);
+        // doc.rect(x, y, labelWidth, labelHeight, 'S');
+
+        // // Draw price at top in large font - centered
+        // doc.setFontSize(12);
+        // doc.setFont('helvetica', 'normal');
+        // const price = item.Price.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || item.price.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || item.PRICE.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || '0.00';
+        // doc.text(`${price}`, x + (labelWidth / 2), y + 10, { align: 'center' });
+
+        // // Draw description text - centered
+        // doc.setFontSize(10);
+        // doc.setFont('helvetica', 'normal');
+
+        // const description = item.Description || item.description || item.DESC || item.Name || item.name || '';
+        // const descriptionLines = doc.splitTextToSize(description, labelWidth - 10);
+        // doc.text(descriptionLines, x + (labelWidth / 2), y + 20, { align: 'center' });
+
+        // // Draw item number/code at bottom - centered
+        // doc.setFontSize(12);
+        // doc.setFont('helvetica', 'normal');
+        // const itemCode = item.Code || item.code || item.ID || item.id || item.ItemNumber || `${index + 1}`;
+        // doc.text(`${itemCode}`, x + (labelWidth / 2), y + labelHeight - 5, { align: 'center' });
+
+
         const positionOnPage = index % labelsPerPage;
         const row = Math.floor(positionOnPage / columns);
         const col = positionOnPage % columns;
@@ -115,7 +213,7 @@ export default function ExcelToPDFLabels() {
         const y = marginTop + (row * (labelHeight + rowGap));
 
         // Draw label background
-        doc.setFillColor(240, 240, 240);
+        doc.setFillColor(255, 255, 255);
         doc.rect(x, y, labelWidth, labelHeight, 'F');
 
         // Draw border
@@ -124,23 +222,30 @@ export default function ExcelToPDFLabels() {
 
         // Draw price at top in large font - centered
         doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        const price = item.Price.toFixed(2) || item.price.toFixed(2) || item.PRICE.toFixed(2) || '0.00';
-        doc.text(`${price}`, x + (labelWidth / 2), y + 10, { align: 'center' });
+        doc.setFont('ERASBD', 'bold');
+        const price = formatCurrency(item.Price, currency) || formatCurrency(item.price, currency) || formatCurrency(item.PRICE, currency) || '0.00';
+        doc.text(`${price}`, x + (labelWidth / 2), y + 6, { align: 'center' });
 
-        // Draw description text - centered
+        // Draw description text - vertically and horizontally centered
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont('ERASLGHT', 'normal');
 
         const description = item.Description || item.description || item.DESC || item.Name || item.name || '';
         const descriptionLines = doc.splitTextToSize(description, labelWidth - 10);
-        doc.text(descriptionLines, x + (labelWidth / 2), y + 20, { align: 'center' });
+
+        // Calculate vertical center position
+        const textHeight = descriptionLines.length * 3.5; // Approximate line height
+        const textStartY = y + (labelHeight / 2) - (textHeight / 2) + 3;
+
+        doc.text(descriptionLines, x + (labelWidth / 2), textStartY, { align: 'center' });
 
         // Draw item number/code at bottom - centered
         doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('ERASBD', 'bold');
         const itemCode = item.Code || item.code || item.ID || item.id || item.ItemNumber || `${index + 1}`;
-        doc.text(`${itemCode}`, x + (labelWidth / 2), y + labelHeight - 5, { align: 'center' });
+        doc.text(`${itemCode}`, x + (labelWidth / 2), y + labelHeight - 2, { align: 'center' });
+
+
       });
 
       // Save the PDF
@@ -158,6 +263,14 @@ export default function ExcelToPDFLabels() {
     setLabelSettings({
       ...labelSettings,
       [name]: parseFloat(value)
+    });
+  };
+
+  const handleCurrencyChange = (e: any) => {
+    const { name, value } = e.target;
+    setLabelSettings({
+      ...labelSettings,
+      [name]: value
     });
   };
 
@@ -179,9 +292,17 @@ export default function ExcelToPDFLabels() {
         <ul className="list-disc pl-5 space-y-1 text-sm">
           <li><strong>Price</strong>: The price displayed at the top of the label</li>
           <li><strong>Description</strong>: The product description shown in the middle</li>
-          <li><strong>Code/ID</strong>: The item code displayed at the bottom</li>
+          <li><strong>Code</strong>: The item code displayed at the bottom</li>
           <li><strong>LabelCount</strong>: How many copies of each label to print (defaults to 1 if not specified)</li>
         </ul>
+        <div className="mt-3">
+          <button
+            onClick={downloadSampleFile}
+            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Download Sample Excel File
+          </button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -206,7 +327,7 @@ export default function ExcelToPDFLabels() {
       {preview.length > 0 && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-2">Data Preview</h2>
-          <div className="overflow-x-auto">
+          <div className="overflow-auto h-52 ">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -311,6 +432,18 @@ export default function ExcelToPDFLabels() {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Currency
+            </label>
+            <input
+              type="text"
+              name="currency"
+              value={labelSettings.currency}
+              onChange={handleCurrencyChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
         </div>
       </div>
 
@@ -329,12 +462,49 @@ export default function ExcelToPDFLabels() {
 
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-2">Label Preview</h2>
+        <p className='text-sm mb-4'>Not an accurate representation of the label</p>
         <div className="border border-gray-300 rounded-md p-4">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${labelSettings.columns}, 1fr)`,
+              gap: `${labelSettings.rowGap}mm ${labelSettings.columnGap}mm`,
+              padding: `${labelSettings.marginTop}mm ${labelSettings.marginLeft}mm`,
+              width: `${labelSettings.pageWidth}mm`,
+              maxHeight: `${labelSettings.pageHeight}mm`,
+              overflow: 'hidden'
+            }}
+            className="bg-white border"
+          >
+            {preview.slice(0, labelSettings.labelsPerPage).map((item: any, idx: number) => (
+              <div
+                key={idx}
+                style={{
+                  width: `${labelSettings.labelWidth}mm`,
+                  height: `${labelSettings.labelHeight}mm`,
+                  minWidth: `${labelSettings.labelWidth}mm`,
+                  minHeight: `${labelSettings.labelHeight}mm`
+                }}
+                className="bg-gray-100 p-1 rounded border border-gray-300 text-center flex flex-col justify-center overflow-hidden text-xs"
+              >
+                <div className="font-bold mb-1 text-sm leading-tight">
+                  {formatCurrency(item.Price) || formatCurrency(item.price) || formatCurrency(item.PRICE) || '0.00'}
+                </div>
+                <div className="text-xs leading-tight mb-1 flex-1 overflow-hidden">
+                  {item.Description || item.description || item.DESC || item.Name || item.name || 'Product Description'}
+                </div>
+                <div className="text-xs font-semibold">
+                  {item.Code || item.code || item.ID || item.id || item.ItemNumber || `${idx + 1}`}
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* 
           <div className="grid grid-cols-2 gap-4">
             {preview.slice(0, 4).map((item: any, idx: number) => (
               <div key={idx} className="bg-gray-100 p-3 rounded border border-gray-300 text-center">
                 <div className="text-lg font-bold">
-                  {item.Price.toFixed(2) || item.price.toFixed(2) || item.PRICE.toFixed(2) || '0.00'}
+                  {item.Price.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || item.price.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || item.PRICE.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || '0.00'}
                 </div>
                 <div className="text-sm my-2 h-12 overflow-hidden">
                   {item.Description || item.description || item.DESC || item.Name || item.name || 'Product Description'}
@@ -344,7 +514,7 @@ export default function ExcelToPDFLabels() {
                 </div>
               </div>
             ))}
-          </div>
+          </div> */}
           {preview.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               Upload an Excel file to see label previews
