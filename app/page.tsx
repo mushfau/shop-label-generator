@@ -4,15 +4,11 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-// import { createErasLight } from './ERASLGHT-normal'
-// import { createErasBold } from './ERASBD-bold'
 import { createErasDemi } from './ERASDEMI-normal'
 import { createErasMD } from './ERASMD-normal'
 
 
-// jsPDF.API.events.push(['addFonts', createErasLight])
-// jsPDF.API.events.push(['addFonts', createErasBold])
-jsPDF.API.events.push(['addFonts', createErasDemi]) 
+jsPDF.API.events.push(['addFonts', createErasDemi])
 jsPDF.API.events.push(['addFonts', createErasMD])
 
 
@@ -161,49 +157,6 @@ export default function ExcelToPDFLabels() {
 
       // Process each item and create labels
       expandedData.forEach((item: any, index: number) => {
-        // // Calculate page number and position
-        // // const page = Math.floor(index / labelsPerPage);
-        // const positionOnPage = index % labelsPerPage;
-        // const row = Math.floor(positionOnPage / columns);
-        // const col = positionOnPage % columns;
-
-        // // Add new page if needed
-        // if (positionOnPage === 0 && index > 0) {
-        //   doc.addPage();
-        // }
-
-        // // Calculate x and y position for this label
-        // const x = marginLeft + (col * (labelWidth + columnGap));
-        // const y = marginTop + (row * (labelHeight + rowGap));
-
-        // // Draw label background
-        // doc.setFillColor(240, 240, 240);
-        // doc.rect(x, y, labelWidth, labelHeight, 'F');
-
-        // // Draw border
-        // doc.setDrawColor(200, 200, 200);
-        // doc.rect(x, y, labelWidth, labelHeight, 'S');
-
-        // // Draw price at top in large font - centered
-        // doc.setFontSize(12);
-        // doc.setFont('helvetica', 'normal');
-        // const price = item.Price.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || item.price.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || item.PRICE.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || '0.00';
-        // doc.text(`${price}`, x + (labelWidth / 2), y + 10, { align: 'center' });
-
-        // // Draw description text - centered
-        // doc.setFontSize(10);
-        // doc.setFont('helvetica', 'normal');
-
-        // const description = item.Description || item.description || item.DESC || item.Name || item.name || '';
-        // const descriptionLines = doc.splitTextToSize(description, labelWidth - 10);
-        // doc.text(descriptionLines, x + (labelWidth / 2), y + 20, { align: 'center' });
-
-        // // Draw item number/code at bottom - centered
-        // doc.setFontSize(12);
-        // doc.setFont('helvetica', 'normal');
-        // const itemCode = item.Code || item.code || item.ID || item.id || item.ItemNumber || `${index + 1}`;
-        // doc.text(`${itemCode}`, x + (labelWidth / 2), y + labelHeight - 5, { align: 'center' });
-
 
         const positionOnPage = index % labelsPerPage;
         const row = Math.floor(positionOnPage / columns);
@@ -438,7 +391,7 @@ export default function ExcelToPDFLabels() {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             />
           </div>
-           <div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Column Gap
             </label>
@@ -450,7 +403,7 @@ export default function ExcelToPDFLabels() {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             />
           </div>
-           <div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Row Gap
             </label>
@@ -529,22 +482,6 @@ export default function ExcelToPDFLabels() {
               </div>
             ))}
           </div>
-          {/* 
-          <div className="grid grid-cols-2 gap-4">
-            {preview.slice(0, 4).map((item: any, idx: number) => (
-              <div key={idx} className="bg-gray-100 p-3 rounded border border-gray-300 text-center">
-                <div className="text-lg font-bold">
-                  {item.Price.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || item.price.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || item.PRICE.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || '0.00'}
-                </div>
-                <div className="text-sm my-2 h-12 overflow-hidden">
-                  {item.Description || item.description || item.DESC || item.Name || item.name || 'Product Description'}
-                </div>
-                <div className="text-base font-semibold">
-                  {item.Code || item.code || item.ID || item.id || item.ItemNumber || `${idx + 1}`}
-                </div>
-              </div>
-            ))}
-          </div> */}
           {preview.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               Upload an Excel file to see label previews
