@@ -4,10 +4,16 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
-import { createErasLight } from './ERASLGHT-normal'
-import { createErasBold } from './ERASBD-bold'
-jsPDF.API.events.push(['addFonts', createErasLight])
-jsPDF.API.events.push(['addFonts', createErasBold])
+// import { createErasLight } from './ERASLGHT-normal'
+// import { createErasBold } from './ERASBD-bold'
+import { createErasDemi } from './ERASDEMI-normal'
+import { createErasMD } from './ERASMD-normal'
+
+
+// jsPDF.API.events.push(['addFonts', createErasLight])
+// jsPDF.API.events.push(['addFonts', createErasBold])
+jsPDF.API.events.push(['addFonts', createErasDemi]) 
+jsPDF.API.events.push(['addFonts', createErasMD])
 
 
 function formatFinancial(number: any) {
@@ -42,13 +48,13 @@ export default function ExcelToPDFLabels() {
     labelsPerPage: 12,
     pageWidth: 210,
     pageHeight: 297,
-    labelWidth: 50,
+    labelWidth: 40,
     labelHeight: 25,
     marginTop: 10,
     marginLeft: 10,
-    columnGap: 10,
-    rowGap: 10,
-    columns: 3
+    columnGap: 0,
+    rowGap: 0,
+    columns: 4
   });
 
   const downloadSampleFile = () => {
@@ -217,18 +223,18 @@ export default function ExcelToPDFLabels() {
         doc.rect(x, y, labelWidth, labelHeight, 'F');
 
         // Draw border
-        doc.setDrawColor(200, 200, 200);
+        doc.setDrawColor(0, 0, 0);
         doc.rect(x, y, labelWidth, labelHeight, 'S');
 
         // Draw price at top in large font - centered
         doc.setFontSize(16);
-        doc.setFont('ERASBD', 'bold');
+        doc.setFont('ERASDEMI', 'normal');
         const price = formatCurrency(item.Price, currency) || formatCurrency(item.price, currency) || formatCurrency(item.PRICE, currency) || '0.00';
         doc.text(`${price}`, x + (labelWidth / 2), y + 6, { align: 'center' });
 
         // Draw description text - vertically and horizontally centered
         doc.setFontSize(10);
-        doc.setFont('ERASLGHT', 'normal');
+        doc.setFont('ERASMD', 'normal');
 
         const description = item.Description || item.description || item.DESC || item.Name || item.name || '';
         const descriptionLines = doc.splitTextToSize(description, labelWidth - 10);
@@ -241,7 +247,7 @@ export default function ExcelToPDFLabels() {
 
         // Draw item number/code at bottom - centered
         doc.setFontSize(12);
-        doc.setFont('ERASBD', 'bold');
+        doc.setFont('ERASDEMI', 'normal');
         const itemCode = item.Code || item.code || item.ID || item.id || item.ItemNumber || `${index + 1}`;
         doc.text(`${itemCode}`, x + (labelWidth / 2), y + labelHeight - 2, { align: 'center' });
 
@@ -428,6 +434,30 @@ export default function ExcelToPDFLabels() {
               type="number"
               name="marginLeft"
               value={labelSettings.marginLeft}
+              onChange={handleSettingsChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
+           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Column Gap
+            </label>
+            <input
+              type="number"
+              name="columnGap"
+              value={labelSettings.columnGap}
+              onChange={handleSettingsChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
+           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Row Gap
+            </label>
+            <input
+              type="number"
+              name="rowGap"
+              value={labelSettings.rowGap}
               onChange={handleSettingsChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             />
